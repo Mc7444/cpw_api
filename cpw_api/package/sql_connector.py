@@ -4,10 +4,10 @@ from time import sleep
 def connect_to_db():
     while True:
         try:
-            connection = mysql.connector.connect(host="localhost",
-                                                user="root",
-                                                password="",
-                                                database="cpw_sql")
+            connection = mysql.connector.connect(host="cpw-db-1.cziqa4cqmxp0.ap-southeast-2.rds.amazonaws.com",
+                                                user="admin",
+                                                password="misthungpang",
+                                                database="cpw")
             return connection
         except Exception as e:
             print("Error: " + str(e))
@@ -47,11 +47,19 @@ def get_sub_answer(choice:str,answerQuestionId:str):
         connection = connect_to_db()
         db_cursor = connection.cursor()
 
-        sql_command = "SELECT sub.s_answer,sub.agency_id,agen.agency_name FROM sub_answer as sub "
-        sql_command+= "INNER JOIN cpw_agency as agen ON sub.agency_id = agen.agency_id "
-        sql_command+= "WHERE sub.choice = %s AND sub.answer_question_id = %s "
+        
+        
+        if(answerQuestionId == "other"):
+            print("Hi Others")
+            sql_command = "SELECT s_answer FROM sub_answer "
+            sql_command+= "WHERE choice = %s "
+            db_cursor.execute(sql_command, (choice,))
+        else:
+            sql_command = "SELECT sub.s_answer,sub.agency_id,agen.agency_name FROM sub_answer as sub "
+            sql_command+= "INNER JOIN cpw_agency as agen ON sub.agency_id = agen.agency_id "
+            sql_command+= "WHERE sub.choice = %s AND sub.answer_question_id = %s "
+            db_cursor.execute(sql_command, (choice, answerQuestionId))
         # ทำการ execute คำสั่ง SQL
-        db_cursor.execute(sql_command, (choice, answerQuestionId))
         res = db_cursor.fetchone()
         print(f"get_sub_answer ::{res}")
         return res

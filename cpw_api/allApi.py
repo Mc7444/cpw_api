@@ -156,13 +156,12 @@ def mainQuesType():
         return data 
     else:
         feedback = get_answer("question","0")
-        description = "รอสักครู่ ฉันจะรีบติดต่อกลับไปให้เร็วที่สุดนะคะ / I’ll get back to you as soon as possible"
         data={ 
                 "cutword": None,
                 "mainQuesType": "0",
                 "answerQuestionId":None,
                 "feedback":feedback[1],
-                "description": description
+                "description": feedback
             } 
         print("\n+++++++++++Invalid Th(Question)++++++++++++")
         print("Data ::::")
@@ -178,21 +177,31 @@ def subQuesType():
     choice = request_data["choice"]
     answerQuestionId = request_data["answerQuestionId"]
 
-    result = get_sub_answer(choice,answerQuestionId)
+    try:
+        result = get_sub_answer(choice,answerQuestionId)
 
-    feedback = result[0]
-    agencyId = result[1]
-    description = result[2]
+        feedback = result[0]
+        agencyId = result[1]
+        description = result[2]
 
-    agency = {"agencyId":agencyId,"description":description}
+        agency = {"agencyId":agencyId,"description":description}
 
-    data={ 
-            "userChoice": choice,
-            "mainQuesId":answerQuestionId,
-            "agency":agency,
-            "feedback":feedback
-            
-        } 
+        data={ 
+                "userChoice": choice,
+                "mainQuesId":answerQuestionId,
+                "agency":agency,
+                "feedback":feedback
+            } 
+    except:
+        result = get_sub_answer("00","other")
+        feedback = result[0]
+        agency = {"agencyId":None,"description":None}
+        data={ 
+                "userChoice": choice,
+                "mainQuesId":answerQuestionId,
+                "agency":agency,
+                "feedback":feedback
+            }
     return data 
 
 if __name__ =="__main__":
