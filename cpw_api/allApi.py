@@ -204,9 +204,6 @@ def subQuesType():
             }
     return data 
     
-@app.route("/")
-def hello():
-    return "hello"
 
 if __name__ =="__main__":
-    app.run(debug=True)
+    app.run()
