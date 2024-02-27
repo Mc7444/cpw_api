@@ -9,18 +9,7 @@ from stop_words import get_stop_words
 from pythainlp.util import normalize
 from package.sql_connector import *
 from package.nlp_function import *
-# 0:Negative 1:Positive 2:Question
-segment_type = "segment_classify/check_segment_type.sav"
-segment_vectorizer = "segment_classify/segment_vectorizer_word.sav"
-segment_model = joblib.load(open(segment_type,"rb"))
-vectorizer_segment = joblib.load(open(segment_vectorizer,"rb"))
 
-# LOAD QEUSTION MODEL
-# 0: 1: 2: 3: 4: 5:
-question_type = "question_classify/check_question_type.sav"
-question_vectorizer = "question_classify/question_vectorizer_word.sav"
-question_model = joblib.load(open(question_type,"rb"))
-vectorizer_question = joblib.load(open(question_vectorizer,"rb"))
 
 def remove_emoji(string):
     emoji_pattern = re.compile("["
@@ -206,4 +195,16 @@ def subQuesType():
     
 
 if __name__ =="__main__":
+    # 0:Negative 1:Positive 2:Question
+    segment_type = "segment_classify/check_segment_type.sav"
+    segment_vectorizer = "segment_classify/segment_vectorizer_word.sav"
+    segment_model = joblib.load(open(segment_type,"rb"))
+    vectorizer_segment = joblib.load(open(segment_vectorizer,"rb"))
+
+    # LOAD QEUSTION MODEL
+    # 0: 1: 2: 3: 4: 5:
+    question_type = "question_classify/check_question_type.sav"
+    question_vectorizer = "question_classify/question_vectorizer_word.sav"
+    question_model = joblib.load(open(question_type,"rb"))
+    vectorizer_question = joblib.load(open(question_vectorizer,"rb"))
     app.run()
