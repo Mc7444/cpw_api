@@ -65,66 +65,111 @@ def clean_msg(msg):
 def cleanning(text):
     return clean_msg(normalize(remove_emoji(text)))
 
-
+def checkThWord(txt):
+  pattern = u"[ก-ฮ]"
+  if re.search(pattern, txt,re.U) and len(txt)>6:
+      return True
+  else:
+      return False
 app = Flask(__name__)
 
 @app.route("/getSegment", methods=['POST'])
 def Segment():
     request_data = request.get_json()
-
     replyFromUser = request_data["reply"]
-    split_text_ai=text_process_save_comma(str(split_word(cleanning(replyFromUser)))) 
 
-    text_list = vectorizer_segment.transform([split_text_ai]).reshape(1,-1).todense()  # นำข้อความที่ถูกแบ่งคำแล้ว (split_text_ai) มาใช้ vectorizer (vectorizer_question) ในการแปลงเป็น vector โดยใช้ transform และ reshape เพื่อเตรียมข้อมูลและแปลงเป็น dense matrix ด้วย todense().
-    predictions = segment_model.predict(np.asarray(text_list)) 
-    description =""
-    if(predictions[0]==0): 
-        description = "negative"
-        feedback = get_answer([description])
-    elif (predictions[0]==1):
-        description = "positive"
-        feedback = get_answer([description])
+    if(checkThWord(replyFromUser)):
+            split_text_ai=text_process_save_comma(str(split_word(cleanning(replyFromUser)))) 
+
+            text_list = vectorizer_segment.transform([split_text_ai]).reshape(1,-1).todense()  # นำข้อความที่ถูกแบ่งคำแล้ว (split_text_ai) มาใช้ vectorizer (vectorizer_question) ในการแปลงเป็น vector โดยใช้ transform และ reshape เพื่อเตรียมข้อมูลและแปลงเป็น dense matrix ด้วย todense().
+            predictions = segment_model.predict(np.asarray(text_list)) 
+            description =""
+            feedback = ""
+            if(predictions[0]==0): 
+                description = "negative"
+                feedback = get_answer(description)
+            elif (predictions[0]==1):
+                description = "positive"
+                feedback = get_answer(description)
+            else:
+                description = "question"
+            print("Description ::::"+description)
+            data={ 
+                    "cutword": split_text_ai,
+                    "segmentType": str(predictions[0]),
+                    "feedback" : feedback,
+                    "description": description
+                } 
+            print("\n+++++++++Valid Th(Segment)+++++++++++++")
+            print("Data ::::")
+            print(data)
+            print("+++++++++++++++++++++++++\n")
     else:
-        description = "question"
-
-    data={ 
-            "cutword": split_text_ai,
-            "segmentType": str(predictions[0]),
-            "feedback" : feedback,
-            "description": description
-        } 
+        data={ 
+                "cutword": None,
+                "segmentType": "2",
+                "feedback" : "2",
+                "description": "Invalid Thai word"
+            } 
+        print("\n+++++++++Inalid Th(Segment)++++++++++++")
+        print("Data ::::")
+        print(data)
+        print("+++++++++++++++++++++++++\n")
     return data 
 
 @app.route("/getMainQuestionType", methods=['POST'])
 def mainQuesType():
+    
     request_data = request.get_json()
-
     replyFromUser = request_data["reply"]
-    split_text_ai=text_process_save_comma(str(split_word(cleanning(replyFromUser)))) 
-    text_list = vectorizer_question.transform([split_text_ai]).reshape(1,-1).todense() 
-    predictions = question_model.predict(np.asarray(text_list))   
-    feedback = get_answer("question",str(predictions[0]))
-    if(predictions[0]==1): 
-        description = "วิชาการ"
-    elif (predictions[0]==2):
-        description = "โภชนาการ"
-    elif (predictions[0]==3):
-        description = "ปกครอง"
-    elif (predictions[0]==4):
-        description = "ธุรการ"
-    elif (predictions[0]==5):
-        description = "สารสนเทศ" 
-    else:
-        description = "รอสักครู่ ฉันจะรีบติดต่อกลับไปให้เร็วที่สุดนะคะ / I’ll get back to you as soon as possible"          
 
-    data={ 
-            "cutword": split_text_ai,
-            "mainQuesType": str(predictions[0]),
-            "answerQuestionId":feedback[0],
-            "feedback":feedback[1],
-            "description": description
-        } 
-    return data 
+    if(checkThWord(replyFromUser)):
+        split_text_ai=text_process_save_comma(str(split_word(cleanning(replyFromUser)))) 
+        text_list = vectorizer_question.transform([split_text_ai]).reshape(1,-1).todense() 
+        predictions = question_model.predict(np.asarray(text_list))   
+        feedback = get_answer("question",str(predictions[0]))
+        description =""
+        if(predictions[0]==1): 
+            description = "วิชาการ"
+        elif (predictions[0]==2):
+            description = "โภชนาการ"
+        elif (predictions[0]==3):
+            description = "ปกครอง"
+        elif (predictions[0]==4):
+            description = "ธุรการ"
+        elif (predictions[0]==5):
+            description = "สารสนเทศ" 
+        else:
+            description = "รอสักครู่ ฉันจะรีบติดต่อกลับไปให้เร็วที่สุดนะคะ / I’ll get back to you as soon as possible"          
+        print("DescriptionMainQuestion ::::"+description)
+        data={ 
+                "cutword": split_text_ai,
+                "mainQuesType": str(predictions[0]),
+                "answerQuestionId":feedback[0],
+                "feedback":feedback[1],
+                "description": description
+            } 
+        print("\n+++++++++Valid Th(Question)++++++++++++")
+        print("Data ::::")
+        print(data )
+        print("+++++++++++++++++++++++++\n")
+        return data 
+    else:
+        feedback = get_answer("question","0")
+        description = "รอสักครู่ ฉันจะรีบติดต่อกลับไปให้เร็วที่สุดนะคะ / I’ll get back to you as soon as possible"
+        data={ 
+                "cutword": None,
+                "mainQuesType": "0",
+                "answerQuestionId":None,
+                "feedback":feedback[1],
+                "description": description
+            } 
+        print("\n+++++++++++Invalid Th(Question)++++++++++++")
+        print("Data ::::")
+        print(data)
+        print("+++++++++++++++++++++++++\n")
+        return data 
+    
 
 @app.route("/getSubQuestionType", methods=['POST'])
 def subQuesType():
