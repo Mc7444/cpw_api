@@ -4,10 +4,10 @@ from time import sleep
 def connect_to_db():
     while True:
         try:
-            connection = mysql.connector.connect(host="cpw-db-1.cziqa4cqmxp0.ap-southeast-2.rds.amazonaws.com",
-                                                user="admin",
-                                                password="misthungpang",
-                                                database="cpw")
+            connection = mysql.connector.connect(host="localhost",
+                                                user="root",
+                                                password="",
+                                                database="cpw_sql")
             return connection
         except Exception as e:
             print("Error: " + str(e))

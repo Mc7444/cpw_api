@@ -1,3 +1,7 @@
+
+from package.sql_connector import *
+from package.nlp_function import *
+
 from flask import Flask,request
 import joblib
 import numpy as np
@@ -7,8 +11,7 @@ from pythainlp import word_tokenize
 from pythainlp.corpus import thai_stopwords
 from stop_words import get_stop_words
 from pythainlp.util import normalize
-from package.sql_connector import *
-from package.nlp_function import *
+
 
 
 def remove_emoji(string):
@@ -192,7 +195,6 @@ def subQuesType():
                 "feedback":feedback
             }
     return data 
-    
 
 if __name__ =="__main__":
     # 0:Negative 1:Positive 2:Question
@@ -207,4 +209,4 @@ if __name__ =="__main__":
     question_vectorizer = "question_classify/question_vectorizer_word.sav"
     question_model = joblib.load(open(question_type,"rb"))
     vectorizer_question = joblib.load(open(question_vectorizer,"rb"))
-    app.run()
+    app.run(debug=True)
