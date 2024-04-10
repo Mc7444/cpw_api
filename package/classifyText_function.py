@@ -1,7 +1,6 @@
 import numpy as np
 from package.sql_connector import * 
 from package.nlp_function import *
-from app import *
 import joblib
 #from bag_of_word import *
 

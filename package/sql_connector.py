@@ -46,15 +46,18 @@ def get_sub_answer(choice:str,answerQuestionId:str):
         print("Get in get_sub_answer <<")
         connection = connect_to_db()
         db_cursor = connection.cursor()
-
-        
-        
-        if(answerQuestionId == "other"):
-            print("Hi Others")
+        sql_count_choice = "SELECT count(choice) FROM sub_answer WHERE answer_question_id = %s"
+        db_cursor.execute(sql_count_choice, (answerQuestionId,))
+        count_choice = db_cursor.fetchone()
+        if(int(choice) == count_choice):
+            answerQuestionId = "other"
+            
+        if(answerQuestionId == "other" ):
             sql_command = "SELECT s_answer FROM sub_answer "
             sql_command+= "WHERE choice = %s "
             db_cursor.execute(sql_command, (choice,))
         else:
+
             sql_command = "SELECT sub.s_answer,sub.agency_id,agen.agency_name FROM sub_answer as sub "
             sql_command+= "INNER JOIN cpw_agency as agen ON sub.agency_id = agen.agency_id "
             sql_command+= "WHERE sub.choice = %s AND sub.answer_question_id = %s "
@@ -66,3 +69,21 @@ def get_sub_answer(choice:str,answerQuestionId:str):
 
     except Exception as e:
         print(f"Error: {e}")
+
+##use
+def get_bad_word_handler():
+    try:
+        print("Get in get_answer <<")
+        connection = connect_to_db()
+        db_cursor = connection.cursor()
+
+        # คำสั่ง SQL สำหรับเพิ่มข้อมูล
+        sql_command = "SELECT answer FROM `answer_question` WHERE message_group = 'bad_word_handler'"
+         # ทำการ execute คำสั่ง SQL
+        db_cursor.execute(sql_command)
+        res = db_cursor.fetchone()
+        print(f"get_bad_word_handler result ::{res[0]}")
+        return res[0]
+
+    except Exception as e:
+        print(f"Error: {e}")    

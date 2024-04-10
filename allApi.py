@@ -1,15 +1,13 @@
 
 from package.sql_connector import *
 from package.nlp_function import *
+from package.bow_bad_word import find_bad_word_in_string
 
 from flask import Flask,request
 import joblib
 import numpy as np
 import re
 import string
-from pythainlp import word_tokenize
-from pythainlp.corpus import thai_stopwords
-from stop_words import get_stop_words
 from pythainlp.util import normalize
 
 
@@ -57,12 +55,6 @@ def clean_msg(msg):
 def cleanning(text):
     return clean_msg(normalize(remove_emoji(text)))
 
-def checkThWord(txt):
-  pattern = u"[ก-ฮ]"
-  if re.search(pattern, txt,re.U) and len(txt)>6:
-      return True
-  else:
-      return False
 app = Flask(__name__)
 
 @app.route("/getSegment", methods=['POST'])
@@ -70,17 +62,34 @@ def Segment():
     request_data = request.get_json()
     replyFromUser = request_data["reply"]
 
-    if(checkThWord(replyFromUser)):
-            split_text_ai=text_process_save_comma(str(split_word(cleanning(replyFromUser)))) 
+    if(find_bad_word_in_string(replyFromUser)):
+        feedback = get_bad_word_handler()
+        data={ 
+                "cutword": None,
+                "segmentType": "bad_word",
+                "feedback" : feedback,
+                "description": "bad_word_handler"
+            } 
+        print("Data ::::")
+        print(data)
+        return data 
 
-            text_list = vectorizer_segment.transform([split_text_ai]).reshape(1,-1).todense()  # นำข้อความที่ถูกแบ่งคำแล้ว (split_text_ai) มาใช้ vectorizer (vectorizer_question) ในการแปลงเป็น vector โดยใช้ transform และ reshape เพื่อเตรียมข้อมูลและแปลงเป็น dense matrix ด้วย todense().
-            predictions = segment_model.predict(np.asarray(text_list)) 
+    split_text_ai=text_process_save_comma(str(split_word(cleanning(replyFromUser)))) 
+
+    readable_text_list = vectorizer_readable.transform([split_text_ai]).reshape(1,-1).todense()
+    readable_predictions = readable_model.predict(np.asarray(readable_text_list)) 
+
+
+    if(readable_predictions[0]==1):
+
+            segment_text_list = vectorizer_segment.transform([split_text_ai]).reshape(1,-1).todense()  # นำข้อความที่ถูกแบ่งคำแล้ว (split_text_ai) มาใช้ vectorizer (vectorizer_question) ในการแปลงเป็น vector โดยใช้ transform และ reshape เพื่อเตรียมข้อมูลและแปลงเป็น dense matrix ด้วย todense().
+            segment_predictions = segment_model.predict(np.asarray(segment_text_list)) 
             description =""
             feedback = ""
-            if(predictions[0]==0): 
+            if(segment_predictions[0]==0): 
                 description = "negative"
                 feedback = get_answer(description)
-            elif (predictions[0]==1):
+            elif (segment_predictions[0]==1):
                 description = "positive"
                 feedback = get_answer(description)
             else:
@@ -88,7 +97,7 @@ def Segment():
             print("Description ::::"+description)
             data={ 
                     "cutword": split_text_ai,
-                    "segmentType": str(predictions[0]),
+                    "segmentType": str(segment_predictions[0]),
                     "feedback" : feedback,
                     "description": description
                 } 
@@ -103,7 +112,7 @@ def Segment():
                 "feedback" : "2",
                 "description": "Invalid Thai word"
             } 
-        print("\n+++++++++Inalid Th(Segment)++++++++++++")
+        print("\n+++++++++Inalid Th or Unreadable(Segment)++++++++++++")
         print("Data ::::")
         print(data)
         print("+++++++++++++++++++++++++\n")
@@ -115,8 +124,24 @@ def mainQuesType():
     request_data = request.get_json()
     replyFromUser = request_data["reply"]
 
-    if(checkThWord(replyFromUser)):
-        split_text_ai=text_process_save_comma(str(split_word(cleanning(replyFromUser)))) 
+    #if bad_word found will return bad word handle and exit this api
+    if(find_bad_word_in_string(replyFromUser)):
+        feedback = get_bad_word_handler()
+        data={ 
+                "cutword": None,
+                "segmentType": "bad_word",
+                "feedback" : feedback,
+                "description": "bad_word_handler"
+            } 
+        print("Data ::::")
+        print(data)
+        return data 
+
+    split_text_ai=text_process_save_comma(str(split_word(cleanning(replyFromUser)))) 
+    readable_text_list = vectorizer_readable.transform([split_text_ai]).reshape(1,-1).todense()
+    readable_predictions = readable_model.predict(np.asarray(readable_text_list)) 
+
+    if(readable_predictions[0]==1):
         text_list = vectorizer_question.transform([split_text_ai]).reshape(1,-1).todense() 
         predictions = question_model.predict(np.asarray(text_list))   
         feedback = get_answer("question",str(predictions[0]))
@@ -155,7 +180,7 @@ def mainQuesType():
                 "feedback":feedback[1],
                 "description": feedback
             } 
-        print("\n+++++++++++Invalid Th(Question)++++++++++++")
+        print("\n+++++++++++Invalid Th or Unreadable(Question)++++++++++++")
         print("Data ::::")
         print(data)
         print("+++++++++++++++++++++++++\n")
@@ -209,4 +234,12 @@ if __name__ =="__main__":
     question_vectorizer = "question_classify/question_vectorizer_word.sav"
     question_model = joblib.load(open(question_type,"rb"))
     vectorizer_question = joblib.load(open(question_vectorizer,"rb"))
+
+    # LOAD READABLE MODEL
+    # 0:unreadable 1:readable
+    readable = "readble_classify/check_read_or_not.sav"
+    readable_vectorizer = "readble_classify/segment_read_or_not.sav"
+    readable_model = joblib.load(open(readable,"rb"))
+    vectorizer_readable = joblib.load(open(readable_vectorizer,"rb"))
+
     app.run(debug=True)
