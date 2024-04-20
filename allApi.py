@@ -34,7 +34,6 @@ def remove_emoji(string):
                                u"\u3030"
                                "]+", flags=re.UNICODE)
     return emoji_pattern.sub(r'', string)
-  
 
 def clean_msg(msg):
     # ลบ text ที่อยู่ในวงเล็บ <> ทั้งหมด
@@ -66,7 +65,7 @@ def Segment():
         feedback = get_bad_word_handler()
         data={ 
                 "cutword": None,
-                "segmentType": "bad_word",
+                "segmentType": "2",
                 "feedback" : feedback,
                 "description": "bad_word_handler"
             } 
@@ -129,7 +128,7 @@ def mainQuesType():
         feedback = get_bad_word_handler()
         data={ 
                 "cutword": None,
-                "segmentType": "bad_word",
+                "segmentType": "2",
                 "feedback" : feedback,
                 "description": "bad_word_handler"
             } 
@@ -193,35 +192,61 @@ def subQuesType():
 
     choice = request_data["choice"]
     answerQuestionId = request_data["answerQuestionId"]
-
-    try:
+    get_range = get_choice_range(answerQuestionId)
+    int_choice = int(choice)
+    if(int_choice<1 or int_choice>get_range):
+        print("set 00")
+        result = get_sub_answer_err("00")
+    else:
+        print("set by json")
         result = get_sub_answer(choice,answerQuestionId)
 
-        feedback = result[0]
+    feedback = result[0]
+    # feedback = "รอสักครู่ ฉันจะรีบติดต่อกลับไปให้เร็วที่สุดนะคะ / I’ll get back to you as soon as possible "
+    agencyId=''
+    description=''
+    if(agencyId or description):
         agencyId = result[1]
         description = result[2]
+    agency = {"agencyId":agencyId,"description":description}
 
-        agency = {"agencyId":agencyId,"description":description}
-
-        data={ 
+    data={ 
                 "userChoice": choice,
                 "mainQuesId":answerQuestionId,
                 "agency":agency,
                 "feedback":feedback
-            } 
-    except:
-        result = get_sub_answer("00","other")
-        feedback = result[0]
-        agency = {"agencyId":None,"description":None}
-        data={ 
-                "userChoice": choice,
-                "mainQuesId":answerQuestionId,
-                "agency":agency,
-                "feedback":feedback
-            }
+        } 
+    # try:
+    #     result = get_sub_answer(choice,answerQuestionId)
+
+    #     feedback = result[0]
+    #     agencyId = result[1]
+    #     description = result[2]
+
+    #     agency = {"agencyId":agencyId,"description":description}
+
+    #     data={ 
+    #             "userChoice": choice,
+    #             "mainQuesId":answerQuestionId,
+    #             "agency":agency,
+    #             "feedback":feedback
+    #         } 
+    # except:
+    #     result = get_sub_answer("00","other")
+    #     feedback = result[0]
+    #     agency = {"agencyId":None,"description":None}
+    #     data={ 
+    #             "userChoice": choice,
+    #             "mainQuesId":answerQuestionId,
+    #             "agency":agency,
+    #             "feedback":feedback
+    #         }
+    print(data)
     return data 
 
 if __name__ =="__main__":
+
+    # LOAD SEGMENT MODEL
     # 0:Negative 1:Positive 2:Question
     segment_type = "segment_classify/check_segment_type.sav"
     segment_vectorizer = "segment_classify/segment_vectorizer_word.sav"
