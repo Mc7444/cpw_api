@@ -203,11 +203,14 @@ def subQuesType():
 
     feedback = result[0]
     # feedback = "รอสักครู่ ฉันจะรีบติดต่อกลับไปให้เร็วที่สุดนะคะ / I’ll get back to you as soon as possible "
-    agencyId=''
-    description=''
-    if(agencyId or description):
-        agencyId = result[1]
-        description = result[2]
+
+    try:
+        agencyId=result[1]
+        description=result[2]
+    except:
+        agencyId=''
+        description=''
+
     agency = {"agencyId":agencyId,"description":description}
 
     data={ 
